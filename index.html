@@ -1,0 +1,282 @@
+<!DOCTYPE html><html lang="en"><head>  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solo Leveling System</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background-color: #05070d;
+      color: #e0e0e0;
+      overflow-x: hidden;
+    }
+    .container {
+      padding: 20px;
+    }
+    h1, h2 {
+      font-weight: 600;
+    }
+    .rento-message {
+      font-style: italic;
+      color: #90caf9;
+      background-color: #0d1220;
+      padding: 12px;
+      border-left: 4px solid #36a2eb;
+      margin-bottom: 30px;
+    }
+    .section-description {
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-top: -10px;
+      margin-bottom: 10px;
+    }
+    canvas {
+      background-color: #0d1220;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid #36a2eb;
+      box-shadow: 0 0 12px #36a2eb66;
+      transition: all 0.6s ease-in-out;
+    }
+    .chart-section {
+      margin-bottom: 40px;
+    }
+    .controls {
+      margin-top: 10px;
+    }
+    .controls label {
+      margin-right: 15px;
+    }
+    .controls input {
+      width: 60px;
+      background: #111;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 4px;
+      margin-left: 5px;
+    }
+    .controls button {
+      background-color: #36a2eb;
+      border: none;
+      padding: 5px 10px;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+    }
+    .controls button:hover,
+    .dismiss-btn:hover {
+      background-color: #559aff;
+      box-shadow: 0 0 10px #559aff88;
+      transform: scale(1.05);
+    }
+    #ascensionOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(#6f00ff66, #000);
+      backdrop-filter: blur(10px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+    #ascensionOverlay.active {
+      display: flex;
+    }
+    #ascensionOverlay h1 {
+      color: #fff;
+      font-size: 2.5rem;
+      animation: overlayFadeIn 1.2s ease-out forwards;
+      text-align: center;
+      text-shadow: 0 0 10px #6f00ff, 0 0 20px #36a2eb;
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 20px #36a2eb66; }
+      50% { box-shadow: 0 0 50px #6f00ffaa; }
+    }
+    @keyframes overlayFadeIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .summon-portal {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(#36a2ebaa, #0b0f1a);
+      animation: portalAppear 2s ease-out;
+      margin: 20px auto;
+      box-shadow: 0 0 40px #36a2eb;
+    }
+    @keyframes portalAppear {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .shadow-soldier {
+      width: 100px;
+      height: 100px;
+      background: url('https://i.ibb.co/Y2RtYrP/shadow-soldier.png') no-repeat center/contain;
+      animation: soldierRise 1s ease-out forwards;
+      opacity: 0;
+      margin: 10px auto;
+    }
+    @keyframes soldierRise {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .dismiss-btn {
+      margin-top: 20px;
+      padding: 8px 16px;
+      background: #6f00ff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 0 12px #6f00ff66;
+    }
+    #levelUpNotice {
+      display:none; position:fixed; top:30%; left:50%; transform:translateX(-50%);
+      color:#36a2eb; font-size:2rem; font-weight:bold; text-shadow: 0 0 10px #36a2eb;
+      z-index:9999; animation: levelUpFlash 2s ease-out;
+    }
+    @keyframes levelUpFlash {
+      0% { transform: scale(0.5) translateX(-50%); opacity: 0; }
+      50% { transform: scale(1.2) translateX(-50%); opacity: 1; }
+      100% { transform: scale(1) translateX(-50%); opacity: 0; }
+    }
+    @media (max-width: 480px) {
+      .summon-portal, .shadow-soldier {
+        width: 80px;
+        height: 80px;
+      }
+      #ascensionOverlay h1 {
+        font-size: 1.8rem;
+      }
+      .dismiss-btn {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="ascensionOverlay">
+    <div>
+      <h1>ASCENSION MODE ACTIVATED</h1>
+      <button class="dismiss-btn" onclick="hideAscension()" aria-label="Dismiss Ascension Overlay">Dismiss</button>
+    </div>
+  </div>
+  <div id="levelUpNotice">LEVEL UP!</div>
+  <div class="summon-portal" id="summonPortal"></div>
+  <div class="shadow-soldier" id="shadowSoldier"></div>
+  <div class="controls">
+    <label>Intuition <input id="intuition" type="number" aria-label="Intuition" /></label>
+    <label>Clarity <input id="clarity" type="number" aria-label="Clarity" /></label>
+    <label>Awakening <input id="awakening" type="number" aria-label="Awakening" /></label>
+    <label>Reality <input id="reality" type="number" aria-label="Reality" /></label>
+    <button onclick="showLevelUp()" aria-label="Trigger Level Up">Trigger Level Up</button>
+    <button onclick="playMusic()" aria-label="Play Music">Play Music</button>
+    <button onclick="toggleMusic(event)" id="toggleMusicBtn" aria-label="Toggle Music">Mute Music</button>
+  </div>
+  <script>
+    const bgMusic = new Audio('https://cdn.pixabay.com/download/audio/2022/03/22/audio_44b7aef7b2.mp3');
+    bgMusic.loop = true;
+    bgMusic.volume = 0.3;let isMusicPlaying = false;
+
+function playMusic() {
+  bgMusic.play();
+  isMusicPlaying = true;
+  document.getElementById('toggleMusicBtn').textContent = 'Mute Music';
+  localStorage.setItem('music', 'on');
+}
+
+function toggleMusic(event) {
+  if (bgMusic.paused) {
+    bgMusic.play();
+    isMusicPlaying = true;
+    event.target.textContent = "Mute Music";
+    localStorage.setItem('music', 'on');
+  } else {
+    bgMusic.pause();
+    isMusicPlaying = false;
+    event.target.textContent = "Play Music";
+    localStorage.setItem('music', 'off');
+  }
+}
+
+const sounds = {
+  levelUp: new Audio('https://cdn.pixabay.com/download/audio/2022/03/15/audio_a69467fd56.mp3'),
+  dungeonOpen: new Audio('https://cdn.pixabay.com/download/audio/2022/03/28/audio_a5229c4f96.mp3'),
+  gateCrack: new Audio('https://cdn.pixabay.com/download/audio/2022/04/11/audio_87a2688359.mp3'),
+  uiChime: new Audio('https://cdn.pixabay.com/download/audio/2023/01/28/audio_15d01dc781.mp3'),
+  heartbeat: new Audio('https://cdn.pixabay.com/download/audio/2022/05/30/audio_68c12fa60e.mp3'),
+  bossRoar: new Audio('https://cdn.pixabay.com/download/audio/2023/05/10/audio_fddfc1173d.mp3')
+};
+
+function showLevelUp() {
+  const notice = document.getElementById('levelUpNotice');
+  notice.style.display = 'block';
+  sounds.levelUp.play();
+  setTimeout(() => { notice.style.display = 'none'; }, 2000);
+}
+
+function summonShadow() {
+  const portal = document.getElementById('summonPortal');
+  const soldier = document.getElementById('shadowSoldier');
+  portal.style.display = 'block';
+  soldier.style.display = 'block';
+  sounds.gateCrack.play();
+  setTimeout(() => {
+    portal.style.display = 'none';
+    soldier.style.display = 'none';
+  }, 10000);
+}
+
+function hideAscension() {
+  document.getElementById('ascensionOverlay').classList.remove('active');
+  sounds.dungeonOpen.play();
+}
+
+window.addEventListener('load', () => {
+  const stats = JSON.parse(localStorage.getItem('stats'));
+  if (stats) {
+    document.getElementById('intuition').value = stats.intuition;
+    document.getElementById('clarity').value = stats.clarity;
+    document.getElementById('awakening').value = stats.awakening;
+    document.getElementById('reality').value = stats.reality;
+  }
+
+  if (localStorage.getItem('music') === 'on') {
+    bgMusic.play();
+    document.getElementById('toggleMusicBtn').textContent = 'Mute Music';
+    isMusicPlaying = true;
+  } else {
+    document.getElementById('toggleMusicBtn').textContent = 'Play Music';
+  }
+});
+
+function saveStats() {
+  const stats = {
+    intuition: parseInt(document.getElementById('intuition').value) || 0,
+    clarity: parseInt(document.getElementById('clarity').value) || 0,
+    awakening: parseInt(document.getElementById('awakening').value) || 0,
+    reality: parseInt(document.getElementById('reality').value) || 0
+  };
+  localStorage.setItem('stats', JSON.stringify(stats));
+  sounds.uiChime.play();
+  showLevelUp();
+}
+
+document.querySelectorAll('input').forEach(input => {
+  input.addEventListener('change', saveStats);
+});
+
+</script>
+</body>
+</html>
